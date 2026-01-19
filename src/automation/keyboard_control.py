@@ -3,6 +3,7 @@
 使用pyautogui实现键盘操作
 """
 import pyautogui
+import pyperclip
 from typing import List, Union
 import time
 
@@ -59,15 +60,29 @@ class KeyboardController:
     def type_unicode(text: str, interval: float = 0.0):
         """
         输入Unicode文本（支持中文等）
+        使用剪贴板方式输入，支持中文、emoji等Unicode字符
         
         Args:
             text: 要输入的文本
             interval: 每个字符之间的间隔（秒）
         """
-        for char in text:
-            pyautogui.write(char)
+        # 保存原剪贴板内容
+        original_clipboard = pyperclip.paste()
+        
+        try:
             if interval > 0:
-                time.sleep(interval)
+                # 如果有间隔，逐字符输入
+                for char in text:
+                    pyperclip.copy(char)
+                    pyautogui.hotkey('ctrl', 'v')
+                    time.sleep(interval)
+            else:
+                # 一次性输入全部文本
+                pyperclip.copy(text)
+                pyautogui.hotkey('ctrl', 'v')
+        finally:
+            # 恢复原剪贴板内容
+            pyperclip.copy(original_clipboard)
     
     @staticmethod
     def press_key(key: str, presses: int = 1, interval: float = 0.0):
