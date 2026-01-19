@@ -162,52 +162,20 @@ class ActionEditDialog(QDialog):
         self.on_type_changed(0)
     
     def setup_params_widgets(self):
-        """创建所有可能的参数控件"""
-        # 鼠标坐标
-        self.x_spin = QSpinBox()
-        self.x_spin.setRange(0, 9999)
-        self.y_spin = QSpinBox()
-        self.y_spin.setRange(0, 9999)
-        
-        # 捕获位置按钮
-        self.capture_btn = QPushButton("捕获位置 (F2)")
-        self.capture_btn.clicked.connect(self.capture_position)
-        
-        # 鼠标按钮
-        self.button_combo = QComboBox()
-        self.button_combo.addItems(["left", "right", "middle"])
-        
-        # 持续时间
-        self.duration_spin = QDoubleSpinBox()
-        self.duration_spin.setRange(0.0, 10.0)
-        self.duration_spin.setSingleStep(0.1)
-        self.duration_spin.setValue(0.25)
-        
-        # 滚动量
-        self.scroll_spin = QSpinBox()
-        self.scroll_spin.setRange(-100, 100)
-        
-        # 文本输入
-        self.text_edit = QLineEdit()
-        
-        # 按键输入
-        self.key_edit = QLineEdit()
-        self.key_edit.setPlaceholderText("如: enter, tab, f1, ctrl")
-        
-        # 组合键输入
-        self.hotkey_edit = QLineEdit()
-        self.hotkey_edit.setPlaceholderText("如: ctrl+c, alt+tab")
-        
-        # 延迟时间
-        self.delay_spin = QDoubleSpinBox()
-        self.delay_spin.setRange(0.0, 3600.0)
-        self.delay_spin.setSingleStep(0.5)
-        self.delay_spin.setValue(1.0)
-        
-        # 按键次数
-        self.presses_spin = QSpinBox()
-        self.presses_spin.setRange(1, 100)
-        self.presses_spin.setValue(1)
+        """创建所有可能的参数控件 - 保存默认值"""
+        # 保存默认值，每次切换类型时重新创建控件
+        self.default_values = {
+            'x': 0,
+            'y': 0,
+            'button': 'left',
+            'duration': 0.25,
+            'scroll': 0,
+            'text': '',
+            'key': '',
+            'hotkey': '',
+            'delay': 1.0,
+            'presses': 1
+        }
     
     def clear_params_layout(self):
         """清空参数布局"""
@@ -218,6 +186,62 @@ class ActionEditDialog(QDialog):
     
     def on_type_changed(self, index):
         """操作类型改变时更新参数界面"""
+        # 保存当前值（如果控件存在）
+        if hasattr(self, 'x_spin') and self.x_spin is not None:
+            try:
+                self.default_values['x'] = self.x_spin.value()
+                self.default_values['y'] = self.y_spin.value()
+            except RuntimeError:
+                pass  # 控件已被删除
+        
+        if hasattr(self, 'button_combo') and self.button_combo is not None:
+            try:
+                self.default_values['button'] = self.button_combo.currentText()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'duration_spin') and self.duration_spin is not None:
+            try:
+                self.default_values['duration'] = self.duration_spin.value()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'scroll_spin') and self.scroll_spin is not None:
+            try:
+                self.default_values['scroll'] = self.scroll_spin.value()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'text_edit') and self.text_edit is not None:
+            try:
+                self.default_values['text'] = self.text_edit.text()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'key_edit') and self.key_edit is not None:
+            try:
+                self.default_values['key'] = self.key_edit.text()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'hotkey_edit') and self.hotkey_edit is not None:
+            try:
+                self.default_values['hotkey'] = self.hotkey_edit.text()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'delay_spin') and self.delay_spin is not None:
+            try:
+                self.default_values['delay'] = self.delay_spin.value()
+            except RuntimeError:
+                pass
+        
+        if hasattr(self, 'presses_spin') and self.presses_spin is not None:
+            try:
+                self.default_values['presses'] = self.presses_spin.value()
+            except RuntimeError:
+                pass
+        
         self.clear_params_layout()
         
         action_type = self.type_combo.currentData()
@@ -225,6 +249,18 @@ class ActionEditDialog(QDialog):
         if action_type in [ActionType.MOUSE_CLICK, ActionType.MOUSE_DOUBLE_CLICK,
                            ActionType.MOUSE_RIGHT_CLICK, ActionType.MOUSE_MOVE,
                            ActionType.MOUSE_DRAG]:
+            # 重新创建控件
+            self.x_spin = QSpinBox()
+            self.x_spin.setRange(0, 9999)
+            self.x_spin.setValue(self.default_values['x'])
+            
+            self.y_spin = QSpinBox()
+            self.y_spin.setRange(0, 9999)
+            self.y_spin.setValue(self.default_values['y'])
+            
+            self.capture_btn = QPushButton("捕获位置 (F2)")
+            self.capture_btn.clicked.connect(self.capture_position)
+            
             coord_widget = QWidget()
             coord_layout = QHBoxLayout(coord_widget)
             coord_layout.setContentsMargins(0, 0, 0, 0)
@@ -236,12 +272,37 @@ class ActionEditDialog(QDialog):
             self.params_layout.addRow("坐标:", coord_widget)
             
             if action_type == ActionType.MOUSE_CLICK:
+                self.button_combo = QComboBox()
+                self.button_combo.addItems(["left", "right", "middle"])
+                index = self.button_combo.findText(self.default_values['button'])
+                if index >= 0:
+                    self.button_combo.setCurrentIndex(index)
                 self.params_layout.addRow("鼠标按键:", self.button_combo)
             
             if action_type in [ActionType.MOUSE_MOVE, ActionType.MOUSE_DRAG]:
+                self.duration_spin = QDoubleSpinBox()
+                self.duration_spin.setRange(0.0, 10.0)
+                self.duration_spin.setSingleStep(0.1)
+                self.duration_spin.setValue(self.default_values['duration'])
                 self.params_layout.addRow("持续时间(秒):", self.duration_spin)
         
         elif action_type == ActionType.MOUSE_SCROLL:
+            # 重新创建控件
+            self.x_spin = QSpinBox()
+            self.x_spin.setRange(0, 9999)
+            self.x_spin.setValue(self.default_values['x'])
+            
+            self.y_spin = QSpinBox()
+            self.y_spin.setRange(0, 9999)
+            self.y_spin.setValue(self.default_values['y'])
+            
+            self.capture_btn = QPushButton("捕获位置 (F2)")
+            self.capture_btn.clicked.connect(self.capture_position)
+            
+            self.scroll_spin = QSpinBox()
+            self.scroll_spin.setRange(-100, 100)
+            self.scroll_spin.setValue(self.default_values['scroll'])
+            
             coord_widget = QWidget()
             coord_layout = QHBoxLayout(coord_widget)
             coord_layout.setContentsMargins(0, 0, 0, 0)
@@ -254,16 +315,33 @@ class ActionEditDialog(QDialog):
             self.params_layout.addRow("滚动量(正向上):", self.scroll_spin)
         
         elif action_type == ActionType.KEYBOARD_TYPE:
+            self.text_edit = QLineEdit()
+            self.text_edit.setText(self.default_values['text'])
             self.params_layout.addRow("输入文本:", self.text_edit)
         
         elif action_type == ActionType.KEYBOARD_PRESS:
+            self.key_edit = QLineEdit()
+            self.key_edit.setPlaceholderText("如: enter, tab, f1, ctrl")
+            self.key_edit.setText(self.default_values['key'])
+            
+            self.presses_spin = QSpinBox()
+            self.presses_spin.setRange(1, 100)
+            self.presses_spin.setValue(self.default_values['presses'])
+            
             self.params_layout.addRow("按键:", self.key_edit)
             self.params_layout.addRow("按键次数:", self.presses_spin)
         
         elif action_type == ActionType.KEYBOARD_HOTKEY:
+            self.hotkey_edit = QLineEdit()
+            self.hotkey_edit.setPlaceholderText("如: ctrl+c, alt+tab")
+            self.hotkey_edit.setText(self.default_values['hotkey'])
             self.params_layout.addRow("组合键:", self.hotkey_edit)
         
         elif action_type == ActionType.DELAY:
+            self.delay_spin = QDoubleSpinBox()
+            self.delay_spin.setRange(0.0, 3600.0)
+            self.delay_spin.setSingleStep(0.5)
+            self.delay_spin.setValue(self.default_values['delay'])
             self.params_layout.addRow("延迟时间(秒):", self.delay_spin)
     
     def capture_position(self):
