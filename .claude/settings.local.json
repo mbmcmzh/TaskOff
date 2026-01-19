@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"F:/Code/TaskOff\" log --oneline --all -20)"
+    ]
+  }
+}

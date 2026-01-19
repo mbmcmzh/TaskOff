@@ -1,0 +1,18 @@
+{
+  "countdown": {
+    "hours": 0,
+    "minutes": 15,
+    "seconds": 0
+  },
+  "options": {
+    "force_close": false,
+    "run_actions": true,
+    "warning_popup": true
+  },
+  "window": {
+    "width": 925,
+    "height": 611,
+    "x": 879,
+    "y": 352
+  }
+}

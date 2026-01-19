@@ -1,0 +1,27 @@
+{
+  "name": "未命名序列",
+  "actions": [
+    {
+      "id": "dcfc0a82",
+      "action_type": "mouse_click",
+      "params": {
+        "x": 0,
+        "y": 0,
+        "button": "left"
+      },
+      "description": "点击位置 (0, 0)",
+      "enabled": true
+    },
+    {
+      "id": "bb33a114",
+      "action_type": "mouse_click",
+      "params": {
+        "x": 0,
+        "y": 0,
+        "button": "left"
+      },
+      "description": "点击位置 (0, 0)",
+      "enabled": true
+    }
+  ]
+}
