@@ -32,6 +32,15 @@ from src.automation.executor import ActionExecutor
 from src.automation.mouse_control import MouseController
 
 
+def get_resource_path(relative_path: str) -> str:
+    """获取资源文件路径（兼容开发与打包）"""
+    if hasattr(sys, "_MEIPASS"):
+        base_dir = sys._MEIPASS  # type: ignore[attr-defined]
+    else:
+        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    return os.path.join(base_dir, relative_path)
+
+
 class MousePositionCapture(QDialog):
     """鼠标位置捕获对话框"""
     
@@ -563,6 +572,10 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("TaskOff - 定时关机自动化工具")
         self.setMinimumSize(800, 600)
+
+        icon_path = get_resource_path("icon.ico")
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         
         # 初始化组件
         self.scheduler = ShutdownScheduler()
@@ -809,7 +822,11 @@ class MainWindow(QMainWindow):
     def setup_tray(self):
         """设置系统托盘"""
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
+        icon_path = get_resource_path("icon.ico")
+        if os.path.exists(icon_path):
+            self.tray_icon.setIcon(QIcon(icon_path))
+        else:
+            self.tray_icon.setIcon(self.style().standardIcon(QStyle.SP_ComputerIcon))
         
         tray_menu = QMenu()
         show_action = tray_menu.addAction("显示主窗口")
@@ -1208,6 +1225,10 @@ def main():
     # 设置应用信息
     app.setApplicationName("TaskOff")
     app.setApplicationDisplayName("TaskOff - 定时关机自动化工具")
+
+    icon_path = get_resource_path("icon.ico")
+    if os.path.exists(icon_path):
+        app.setWindowIcon(QIcon(icon_path))
     
     window = MainWindow()
     window.show()
