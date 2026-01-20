@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QCheckBox, QDoubleSpinBox, QFrame, QSplitter, QStatusBar,
     QSystemTrayIcon, QStyle
 )
-from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QThread, QPoint
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QThread, QPoint, QStandardPaths
 from PyQt5.QtGui import QFont, QIcon, QColor, QPalette, QCursor
 from pynput import keyboard as pynput_keyboard
 
@@ -39,6 +39,15 @@ def get_resource_path(relative_path: str) -> str:
     else:
         base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     return os.path.join(base_dir, relative_path)
+
+
+def get_settings_path() -> str:
+    """获取可写的设置文件路径（用户目录）"""
+    base_dir = QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+    if not base_dir:
+        base_dir = os.path.expanduser("~")
+    os.makedirs(base_dir, exist_ok=True)
+    return os.path.join(base_dir, "settings.json")
 
 
 class MousePositionCapture(QDialog):
@@ -565,9 +574,6 @@ class MainWindow(QMainWindow):
     countdown_warning = pyqtSignal(int)
     countdown_complete = pyqtSignal()
     
-    # 设置文件路径
-    SETTINGS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "settings.json")
-    
     def __init__(self):
         super().__init__()
         self.setWindowTitle("TaskOff - 定时关机自动化工具")
@@ -845,6 +851,9 @@ class MainWindow(QMainWindow):
         self.tray_icon.setContextMenu(tray_menu)
         self.tray_icon.activated.connect(self.on_tray_activated)
         self.tray_icon.show()
+
+    def _get_settings_file(self) -> str:
+        return get_settings_path()
     
     def set_quick_time(self, minutes: int):
         """设置快捷时间"""
@@ -1157,6 +1166,7 @@ class MainWindow(QMainWindow):
     def save_settings(self):
         """保存设置到文件"""
         try:
+            settings_file = self._get_settings_file()
             settings = {
                 'countdown': {
                     'hours': self.hours_spin.value(),
@@ -1175,7 +1185,7 @@ class MainWindow(QMainWindow):
                     'y': self.y(),
                 }
             }
-            with open(self.SETTINGS_FILE, 'w', encoding='utf-8') as f:
+            with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"保存设置失败: {e}")
@@ -1183,10 +1193,11 @@ class MainWindow(QMainWindow):
     def load_settings(self):
         """从文件加载设置"""
         try:
-            if not os.path.exists(self.SETTINGS_FILE):
+            settings_file = self._get_settings_file()
+            if not os.path.exists(settings_file):
                 return
             
-            with open(self.SETTINGS_FILE, 'r', encoding='utf-8') as f:
+            with open(settings_file, 'r', encoding='utf-8') as f:
                 settings = json.load(f)
             
             # 加载倒计时设置
